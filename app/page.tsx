@@ -15,7 +15,8 @@ import {
   RefreshCw, 
   Check, 
   Bookmark, 
-  Volume2
+  Volume2,
+  Trash2
 } from 'lucide-react';
 import { supabase, isMock } from '@/lib/supabaseClient';
 import { MoodType, responseBank } from '@/lib/responseBank';
@@ -349,10 +350,30 @@ export default function NoonaApp() {
           return [...prev, newRecord];
         });
       })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chats' }, (payload: any) => {
+        const oldRecord = payload.old as { id: string };
+        setMessages(prev => prev.filter(m => m.id !== oldRecord.id));
+      })
+      .on('postgres_changes', { event: 'DELETE_ALL', schema: 'public', table: 'chats' }, () => {
+        setMessages([]);
+      })
       .subscribe();
 
     return () => {
       channel.unsubscribe();
+    };
+  }, []);
+
+  // Prevent Ctrl+F5 refresh
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey && e.key === 'F5') || (e.ctrlKey && e.key === 'f5') || (e.ctrlKey && e.keyCode === 116)) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -481,6 +502,23 @@ export default function NoonaApp() {
     }
   };
 
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('chats')
+        .delete()
+        .eq('id', messageId);
+      
+      if (!error) {
+        setMessages(prev => prev.filter(m => m.id !== messageId));
+      } else {
+        alert("Failed to delete message: " + error.message);
+      }
+    } catch (err) {
+      console.error("Failed to delete message:", err);
+    }
+  };
+
   // Send Chat Message
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -520,6 +558,22 @@ export default function NoonaApp() {
 
       const data = await res.json();
       
+      // If mock, save it client-side to persist in localStorage and sync with /noona
+      let savedRecord: any = null;
+      if (isMock) {
+        const { data: insertData } = await supabase
+          .from('chats')
+          .insert({
+            user_id: userId,
+            message: userText,
+            response: data.response,
+            mood: currentMood
+          });
+        if (insertData && insertData.length > 0) {
+          savedRecord = insertData[0];
+        }
+      }
+      
       // Delay response slightly to simulate real typing
       setTimeout(() => {
         setIsTyping(false);
@@ -530,8 +584,9 @@ export default function NoonaApp() {
             if (m.id === tempId) {
               return {
                 ...m,
-                id: data.id || tempId,
-                response: data.response
+                id: savedRecord?.id || data.id || tempId,
+                response: data.response,
+                created_at: savedRecord?.created_at || m.created_at
               };
             }
             return m;
@@ -608,13 +663,6 @@ export default function NoonaApp() {
                 >
                   <Sparkles className="w-3.5 h-3.5 fill-[#728156] text-[#728156]" />
                 </button>
-                <a
-                  href="/noona"
-                  className="w-6 h-6 rounded-full bg-[#E7F5DC] flex items-center justify-center text-[#728156] hover:scale-105 transition"
-                  title="Noona Reply Screen"
-                >
-                  <HeartHandshake className="w-3.5 h-3.5 text-[#728156]" />
-                </a>
               </div>
             )}
           </div>
@@ -639,23 +687,23 @@ export default function NoonaApp() {
               const rightBtnLabel = activeLetter?.rightButton || "False";
               const isSpecial = activeLetter?.title === "Special Letter";
               const textStyle = isSpecial 
-                ? "whitespace-pre-line text-left text-xs sm:text-[13px] leading-relaxed font-semibold px-1 py-1 text-[#606d45]" 
+                ? "whitespace-pre-line text-left text-[11px] sm:text-xs md:text-[13px] leading-snug font-semibold px-1 py-0.5 text-[#525d3d]" 
                 : "whitespace-pre-line text-center text-base font-bold px-2 leading-snug text-[#728156]";
               const cardBgClass = isSpecial 
-                ? "bg-gradient-to-br from-[#FCFAF2] via-[#F8F3E5] to-[#F2E8CD] border-[#EADBB7]"
+                ? "bg-gradient-to-br from-[#F4FAF0] via-[#E7F5DC] to-[#D5E8C8] border-[#cbe3bb]"
                 : "glass-card border-white/60";
               
               return (
-                <div className={`w-full flex-1 min-h-0 max-h-[390px] rounded-[36px] p-6 flex flex-col justify-between items-center relative shadow-soft transition-all duration-500 hover:shadow-md border-2 ${cardBgClass}`}>
+                <div className={`w-full flex-1 min-h-0 max-h-[390px] rounded-[36px] ${isSpecial ? 'p-4 sm:p-5' : 'p-6'} flex flex-col justify-between items-center relative shadow-soft transition-all duration-500 hover:shadow-md border-2 ${cardBgClass}`}>
                   <div className="w-full flex justify-between items-center shrink-0">
-                    <span className={`text-sm font-semibold tracking-wide uppercase ${isSpecial ? 'text-[#9A844F]' : 'text-[#728156]/70'}`}>
+                    <span className={`text-sm font-semibold tracking-wide uppercase ${isSpecial ? 'text-[#728156]' : 'text-[#728156]/70'}`}>
                       {letterTitle}
                     </span>
-                    <Sparkles className={`w-4 h-4 ${isSpecial ? 'text-[#9A844F]/70 animate-pulse' : 'text-[#728156]/50'}`} />
+                    <Sparkles className={`w-4 h-4 ${isSpecial ? 'text-[#728156] animate-pulse' : 'text-[#728156]/50'}`} />
                   </div>
 
                   {/* Question Text */}
-                  <div className="flex-1 min-h-0 w-full flex flex-col justify-start items-center overflow-y-auto chat-scrollbar pr-1">
+                  <div className={`flex-1 min-h-0 w-full flex flex-col justify-start items-center ${isSpecial ? 'overflow-hidden' : 'overflow-y-auto chat-scrollbar pr-1'}`}>
                     <p className={`${textStyle} w-full my-auto`}>
                       {activeLetter?.text || "Your are one and only for me, isn't it?"}
                     </p>
@@ -668,7 +716,7 @@ export default function NoonaApp() {
                     </div>
                   ) : (
                     // Spacer for Special Letter layout to push buttons down cleanly
-                    <div className="flex-1 min-h-[10px]" />
+                    <div className="h-2 sm:h-3" />
                   )}
 
                   {/* Action Buttons OR Feedback Toast (replaces buttons when answer is selected) */}
@@ -769,7 +817,16 @@ export default function NoonaApp() {
                       <div key={item.id} className="flex flex-col gap-2">
                         {/* His message (Lynn is sender -> Right side) */}
                         {item.message && (
-                          <div className="flex justify-end">
+                          <div className="flex justify-end items-center gap-2">
+                            {!item.response && (
+                              <button 
+                                onClick={() => handleDeleteMessage(item.id)}
+                                className="p-1 rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition shrink-0"
+                                title="Delete message"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                             <div className="bg-[#E7F5DC] text-[#728156] text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[80%] shadow-inner-soft border border-[#cbe3bb]/30 whitespace-pre-line">
                               {item.message}
                             </div>
@@ -778,13 +835,20 @@ export default function NoonaApp() {
 
                         {/* Her response (Noona is receiver/reply -> Left side) */}
                         {item.response && (
-                          <div className="flex justify-start">
+                          <div className="flex justify-start items-center gap-2">
                             <div className="glass-card text-[#728156] text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tl-sm max-w-[80%] border border-[#728156]/10 whitespace-pre-line">
                               {item.response}
                               <span className="block text-[8px] text-[#728156]/60 mt-1 capitalize text-right">
                                 🌸 {item.mood}
                               </span>
                             </div>
+                            <button 
+                              onClick={() => handleDeleteMessage(item.id)}
+                              className="p-1 rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition shrink-0"
+                              title="Delete message"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         )}
                       </div>

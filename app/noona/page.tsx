@@ -79,10 +79,30 @@ export default function NoonaReplyScreen() {
           return [...prev, newRecord];
         });
       })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chats' }, (payload: any) => {
+        const oldRecord = payload.old as { id: string };
+        setMessages(prev => prev.filter(m => m.id !== oldRecord.id));
+      })
+      .on('postgres_changes', { event: 'DELETE_ALL', schema: 'public', table: 'chats' }, () => {
+        setMessages([]);
+      })
       .subscribe();
 
     return () => {
       channel.unsubscribe();
+    };
+  }, []);
+
+  // Prevent Ctrl+F5 refresh
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey && e.key === 'F5') || (e.ctrlKey && e.key === 'f5') || (e.ctrlKey && e.keyCode === 116)) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -154,12 +174,39 @@ export default function NoonaReplyScreen() {
     }
   };
 
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('chats')
+        .delete()
+        .eq('id', messageId);
+      
+      if (!error) {
+        setMessages(prev => prev.filter(m => m.id !== messageId));
+      } else {
+        alert("Failed to delete message: " + error.message);
+      }
+    } catch (err) {
+      console.error("Failed to delete message:", err);
+    }
+  };
+
   const clearChatHistory = async () => {
     if (confirm("Are you sure you want to clear the chat history?")) {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('noona_chats');
-        setMessages([]);
-        alert("Chat history cleared!");
+      try {
+        const { error } = await supabase
+          .from('chats')
+          .delete()
+          .eq('user_id', userId);
+        
+        if (!error) {
+          setMessages([]);
+          alert("Chat history cleared!");
+        } else {
+          alert("Failed to clear chat history: " + error.message);
+        }
+      } catch (err) {
+        console.error("Failed to clear chat history:", err);
       }
     }
   };
@@ -235,7 +282,7 @@ export default function NoonaReplyScreen() {
                   const letterContent = match ? match[2] : item.message;
 
                   return (
-                    <div key={item.id} className="flex justify-start w-full my-2">
+                    <div key={item.id} className="flex justify-start items-center gap-2 w-full my-2">
                       <div className="w-[85%] rounded-[24px] bg-gradient-to-br from-[#E7F5DC]/45 to-[#F4FAF0]/90 border border-[#cbe3bb]/40 p-4 shadow-sm relative overflow-hidden">
                         {/* Decorative background outline */}
                         <div className="absolute top-1 right-1 opacity-[0.05] pointer-events-none">
@@ -263,6 +310,13 @@ export default function NoonaReplyScreen() {
                           </span>
                         </div>
                       </div>
+                      <button 
+                        onClick={() => handleDeleteMessage(item.id)}
+                        className="p-1 rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition shrink-0"
+                        title="Delete game record"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   );
                 } else {
@@ -270,16 +324,32 @@ export default function NoonaReplyScreen() {
                     <div key={item.id} className="flex flex-col gap-2">
                       {/* His message (Lynn is sender -> Left side of screen) */}
                       {item.message && (
-                        <div className="flex justify-start">
+                        <div className="flex justify-start items-center gap-2">
                           <div className="glass-card text-[#728156] text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tl-sm max-w-[80%] border border-[#728156]/10 whitespace-pre-line">
                             {item.message}
                           </div>
+                          {!item.response && (
+                            <button 
+                              onClick={() => handleDeleteMessage(item.id)}
+                              className="p-1 rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition shrink-0"
+                              title="Delete message"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       )}
 
                       {/* Her response/reply (Noona is sender -> Right side of screen) */}
                       {item.response && (
-                        <div className="flex justify-end">
+                        <div className="flex justify-end items-center gap-2">
+                          <button 
+                            onClick={() => handleDeleteMessage(item.id)}
+                            className="p-1 rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition shrink-0"
+                            title="Delete message"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                           <div className="bg-[#728156] text-white text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[80%] shadow-inner-soft border border-[#728156]/10 whitespace-pre-line">
                             {item.response}
                             {item.mood && (
