@@ -283,6 +283,15 @@ export default function NoonaApp() {
     };
     updateTime();
     const interval = setInterval(updateTime, 60000);
+
+    // Register Service Worker for PWA installability
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then(
+        (reg) => console.log('PWA ServiceWorker registered with scope:', reg.scope),
+        (err) => console.warn('PWA ServiceWorker registration failed:', err)
+      );
+    }
+
     return () => clearInterval(interval);
   }, []);
 
@@ -529,7 +538,7 @@ export default function NoonaApp() {
     }
   };
 
-  const containerClass = "relative w-full max-w-[430px] h-screen md:h-[932px] bg-white shadow-soft border-l border-r border-[#728156]/5 flex flex-col justify-between px-5 pb-6 pt-2 transition-all duration-500 md:rounded-[40px] overflow-hidden";
+  const containerClass = "relative w-full h-[100dvh] bg-[#F0F4EF] flex flex-col justify-between transition-all duration-500 overflow-hidden safe-area-padding";
 
   return (
     <div className={containerClass}>
@@ -539,34 +548,34 @@ export default function NoonaApp() {
       <div className="bg-blob w-44 h-44 bg-[#eef8e8] top-[45%] right-[-10px] opacity-60" style={{ animationDelay: '-10s' }} />
 
       {/* Screen Content Wrapper */}
-      <div className="flex-1 flex flex-col overflow-hidden relative z-10">
+      <div className="flex-1 flex flex-col w-full max-w-lg mx-auto overflow-hidden relative z-10">
         
         {/* Main App Header with Curved Pastel Top Panel (Matching images) */}
         <div className="bg-[#E7F5DC]/45 pb-5 pt-4 px-5 rounded-b-[36px] flex items-center justify-between z-40 -mx-5 mb-4 border-b border-[#cbe3bb]/15">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {activeScreen !== 'crush-game' ? (
               <button 
                 onClick={() => setActiveScreen('crush-game')}
-                className="text-[#728156] hover:text-[#728156]/80 flex items-center gap-1 text-xs font-bold"
+                className="text-[#728156] hover:text-[#728156]/80 flex items-center gap-1 text-[11px] sm:text-xs font-bold"
               >
                 <span>&larr; Back</span>
               </button>
             ) : (
-              <span className="text-lg font-extrabold tracking-tight text-[#728156] flex items-center gap-1">
-                Noona <Heart className="w-4 h-4 fill-[#728156] text-[#728156]" />
+              <span className="text-base sm:text-lg font-extrabold tracking-tight text-[#728156] flex items-center gap-0.5 sm:gap-1">
+                Noona <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-[#728156] text-[#728156]" />
               </span>
             )}
           </div>
           
           {/* Mood / Category Selector Tabs (Cute, Flirty, Deep) */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             {(['cute', 'flirty', 'deep'] as MoodType[]).map((mood) => {
               const isActive = currentMood === mood;
               return (
                 <button
                   key={mood}
                   onClick={() => selectMood(mood)}
-                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold capitalize transition-all duration-300 ${
+                  className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold capitalize transition-all duration-300 ${
                     isActive
                       ? 'bg-[#E7F5DC] text-[#728156] shadow-sm border border-[#cbe3bb]'
                       : 'text-[#728156]/60 hover:text-[#728156]'
@@ -622,8 +631,8 @@ export default function NoonaApp() {
                 : "whitespace-pre-line text-center text-base font-bold px-2 leading-snug text-[#728156]";
               
               return (
-                <div className="w-full flex-1 max-h-[390px] glass-card rounded-[36px] p-6 flex flex-col justify-between items-center relative shadow-soft transition-all duration-500 hover:shadow-md border-2 border-white/60">
-                  <div className="w-full flex justify-between items-center">
+                <div className="w-full flex-1 min-h-0 max-h-[390px] glass-card rounded-[36px] p-6 flex flex-col justify-between items-center relative shadow-soft transition-all duration-500 hover:shadow-md border-2 border-white/60">
+                  <div className="w-full flex justify-between items-center shrink-0">
                     <span className="text-sm font-semibold tracking-wide uppercase text-[#728156]/70">
                       {letterTitle}
                     </span>
@@ -631,15 +640,15 @@ export default function NoonaApp() {
                   </div>
 
                   {/* Question Text */}
-                  <div className="text-center mt-2 mb-2 flex flex-col items-center w-full overflow-y-auto no-scrollbar">
-                    <p className={textStyle}>
+                  <div className="flex-1 min-h-0 w-full flex flex-col justify-center items-center my-auto overflow-y-auto no-scrollbar">
+                    <p className={`${textStyle} w-full`}>
                       {activeLetter?.text || "Your are one and only for me, isn't it?"}
                     </p>
                   </div>
 
                   {/* Heart outline: rendered inline only for standard letters, under the letter text */}
                   {!isSpecial ? (
-                    <div className="flex-1 flex items-center justify-center my-1 pointer-events-none opacity-30 z-0 w-full">
+                    <div className="heart-outline-container flex-1 flex items-center justify-center my-1 pointer-events-none opacity-30 z-0 w-full">
                       <Heart className="w-28 h-28 text-[#728156] fill-transparent stroke-[1.5] animate-heart-pulse" />
                     </div>
                   ) : (
@@ -811,16 +820,16 @@ export default function NoonaApp() {
             </p>
 
             {/* Quote Glass Card */}
-            <div className="w-full flex-1 max-h-[380px] glass-card rounded-[36px] p-8 flex flex-col justify-between items-center relative border-2 border-white/60 shadow-soft">
-              <div className="w-full flex justify-between items-center">
+            <div className="w-full flex-1 min-h-0 max-h-[380px] glass-card rounded-[36px] p-8 flex flex-col justify-between items-center relative border-2 border-white/60 shadow-soft">
+              <div className="w-full flex justify-between items-center shrink-0">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#728156]/60 bg-[#E7F5DC]/60 px-2.5 py-1 rounded-full capitalize">
                   ✨ {currentMood} Quote
                 </span>
                 <Volume2 className="w-4 h-4 text-[#728156]/50 cursor-pointer hover:text-[#728156] transition" />
               </div>
 
-              <div className="my-8 text-center">
-                <p className="text-[#728156] text-sm font-bold leading-relaxed italic">
+              <div className="flex-1 min-h-0 w-full flex flex-col justify-center items-center my-6 overflow-y-auto no-scrollbar">
+                <p className="text-[#728156] text-sm font-bold leading-relaxed italic text-center w-full">
                   "{quotesBank[currentMood]?.[quoteIndex] || quotesBank.cute[0]}"
                 </p>
               </div>
