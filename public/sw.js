@@ -1,4 +1,4 @@
-const CACHE_NAME = 'noona-cache-v1';
+const CACHE_NAME = 'noona-cache-v3';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -7,56 +7,71 @@ const urlsToCache = [
   '/apple-touch-icon.png'
 ];
 
-// Install a service worker
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
+      .then(cache => cache.addAll(urlsToCache))
+      .then(() => self.skipWaiting())
   );
 });
 
-// Cache and return requests
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys()
+      .then(cacheNames => Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+          return undefined;
+        })
+      ))
+      .then(() => self.clients.claim())
+  );
+});
+
 self.addEventListener('fetch', event => {
-  // Only handle HTTP/HTTPS requests (ignores WebSockets and Chrome extensions)
-  if (!event.request.url.startsWith('http') && !event.request.url.startsWith('https')) {
+  const request = event.request;
+
+  if (!request.url.startsWith('http') || request.method !== 'GET') {
     return;
   }
-  
-  // Ignore Next.js development hot module replacement (HMR) requests
-  if (event.request.url.includes('/_next/') || event.request.url.includes('webpack-hmr')) {
+
+  const url = new URL(request.url);
+
+  if (url.pathname.startsWith('/_next/') || url.pathname.includes('webpack-hmr')) {
+    return;
+  }
+
+  const isHtmlRequest = request.mode === 'navigate' || request.destination === 'document' || url.pathname === '/';
+
+  if (isHtmlRequest) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, responseClone));
+          return response;
+        })
+        .catch(() => caches.match(request).then(response => response || caches.match('/')))
+    );
     return;
   }
 
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
-      .catch(err => {
-        // Fallback to fetch on match failure
-        return fetch(event.request);
-      })
-  );
-});
+    caches.match(request)
+      .then(cachedResponse => {
+        const fetchPromise = fetch(request)
+          .then(response => {
+            if (response && response.ok) {
+              const responseClone = response.clone();
+              caches.open(CACHE_NAME).then(cache => cache.put(request, responseClone));
+            }
+            return response;
+          })
+          .catch(() => cachedResponse);
 
-// Update a service worker
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+        return cachedResponse || fetchPromise;
+      })
   );
 });

@@ -288,8 +288,32 @@ export default function NoonaApp() {
 
     // Register Service Worker for PWA installability
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      let hasReloadedForSw = false;
+
+      const reloadOnce = () => {
+        if (!hasReloadedForSw) {
+          hasReloadedForSw = true;
+          window.location.reload();
+        }
+      };
+
       navigator.serviceWorker.register('/sw.js').then(
-        (reg) => console.log('PWA ServiceWorker registered with scope:', reg.scope),
+        (reg) => {
+          console.log('PWA ServiceWorker registered with scope:', reg.scope);
+
+          reg.addEventListener('updatefound', () => {
+            const installingWorker = reg.installing;
+            if (!installingWorker) return;
+
+            installingWorker.addEventListener('statechange', () => {
+              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                reloadOnce();
+              }
+            });
+          });
+
+          navigator.serviceWorker.addEventListener('controllerchange', reloadOnce);
+        },
         (err) => console.warn('PWA ServiceWorker registration failed:', err)
       );
     }
