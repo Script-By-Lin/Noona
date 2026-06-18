@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { supabase, isMock } from '@/lib/supabaseClient';
 import { MoodType, responseBank } from '@/lib/responseBank';
+import { playNotificationSound } from '@/lib/audio';
 
 // Quotes bank matching moods
 const quotesBank: Record<MoodType, string[]> = {
@@ -340,6 +341,11 @@ export default function NoonaApp() {
             return prev.map((m, idx) => idx === optIndex ? newRecord : m);
           }
           
+          // Play notification chime for manual incoming replies from Noona
+          if (newRecord.response && !newRecord.message) {
+            playNotificationSound();
+          }
+          
           return [...prev, newRecord];
         });
       })
@@ -517,6 +523,7 @@ export default function NoonaApp() {
       // Delay response slightly to simulate real typing
       setTimeout(() => {
         setIsTyping(false);
+        playNotificationSound();
         setMessages(prev => {
           // Replace temp msg with actual saved message, or update it
           return prev.map(m => {
@@ -538,20 +545,18 @@ export default function NoonaApp() {
     }
   };
 
-  const containerClass = "relative w-full h-[100dvh] bg-[#F0F4EF] flex flex-col justify-between transition-all duration-500 overflow-hidden safe-area-padding";
-
   return (
-    <div className={containerClass}>
-      {/* Background Animated Blobs inside mobile viewport container */}
+    <div className="w-full h-[100dvh] bg-[#F0F4EF] flex justify-center items-center overflow-hidden relative">
+      {/* Background Animated Blobs inside viewport container */}
       <div className="bg-blob w-52 h-52 bg-[#E7F5DC] top-12 left-[-20px] opacity-70" />
       <div className="bg-blob w-72 h-72 bg-[#F4FAF0] bottom-10 right-[-30px] opacity-70" style={{ animationDelay: '-5s' }} />
       <div className="bg-blob w-44 h-44 bg-[#eef8e8] top-[45%] right-[-10px] opacity-60" style={{ animationDelay: '-10s' }} />
 
-      {/* Screen Content Wrapper */}
-      <div className="flex-1 flex flex-col w-full max-w-lg mx-auto overflow-hidden relative z-10">
+      {/* Screen Content Wrapper (Centered smartphone frame on desktop, full screen on mobile) */}
+      <div className="w-full md:max-w-[428px] h-full md:h-[92dvh] md:rounded-[48px] md:border-4 md:border-white/80 md:shadow-2xl bg-[#F0F4EF] flex flex-col overflow-hidden relative z-10">
         
-        {/* Main App Header with Curved Pastel Top Panel (Matching images) */}
-        <div className="bg-[#E7F5DC]/45 pb-5 pt-4 px-5 rounded-b-[36px] flex items-center justify-between z-40 -mx-5 mb-4 border-b border-[#cbe3bb]/15">
+        {/* Main App Header with Curved Pastel Top Panel (Matching images, supports safe area notch) */}
+        <div className="bg-[#E7F5DC]/55 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] px-5 rounded-b-[36px] flex items-center justify-between z-40 border-b border-[#cbe3bb]/20 shrink-0">
           <div className="flex items-center gap-1">
             {activeScreen !== 'crush-game' ? (
               <button 
@@ -603,6 +608,13 @@ export default function NoonaApp() {
                 >
                   <Sparkles className="w-3.5 h-3.5 fill-[#728156] text-[#728156]" />
                 </button>
+                <a
+                  href="/noona"
+                  className="w-6 h-6 rounded-full bg-[#E7F5DC] flex items-center justify-center text-[#728156] hover:scale-105 transition"
+                  title="Noona Reply Screen"
+                >
+                  <HeartHandshake className="w-3.5 h-3.5 text-[#728156]" />
+                </a>
               </div>
             )}
           </div>
@@ -612,7 +624,7 @@ export default function NoonaApp() {
         {/* SCREEN: CRUSH GAME (MATCHING DESIGN)                      */}
         {/* ========================================================= */}
         {activeScreen === 'crush-game' && (
-          <div className="flex-1 flex flex-col justify-between pt-1 pb-4 z-10 animate-fade-in">
+          <div className="flex-1 flex flex-col justify-between pt-1 pb-4 z-10 animate-fade-in px-5 overflow-hidden">
             
             {/* Intro subText */}
             <p className="text-[#728156] text-[13px] text-center font-semibold px-2 leading-relaxed h-12 flex items-center justify-center">
@@ -627,21 +639,24 @@ export default function NoonaApp() {
               const rightBtnLabel = activeLetter?.rightButton || "False";
               const isSpecial = activeLetter?.title === "Special Letter";
               const textStyle = isSpecial 
-                ? "whitespace-pre-line text-left text-[11px] leading-relaxed font-semibold px-1 py-1 text-[#728156]" 
+                ? "whitespace-pre-line text-left text-xs sm:text-[13px] leading-relaxed font-semibold px-1 py-1 text-[#606d45]" 
                 : "whitespace-pre-line text-center text-base font-bold px-2 leading-snug text-[#728156]";
+              const cardBgClass = isSpecial 
+                ? "bg-gradient-to-br from-[#FCFAF2] via-[#F8F3E5] to-[#F2E8CD] border-[#EADBB7]"
+                : "glass-card border-white/60";
               
               return (
-                <div className="w-full flex-1 min-h-0 max-h-[390px] glass-card rounded-[36px] p-6 flex flex-col justify-between items-center relative shadow-soft transition-all duration-500 hover:shadow-md border-2 border-white/60">
+                <div className={`w-full flex-1 min-h-0 max-h-[390px] rounded-[36px] p-6 flex flex-col justify-between items-center relative shadow-soft transition-all duration-500 hover:shadow-md border-2 ${cardBgClass}`}>
                   <div className="w-full flex justify-between items-center shrink-0">
-                    <span className="text-sm font-semibold tracking-wide uppercase text-[#728156]/70">
+                    <span className={`text-sm font-semibold tracking-wide uppercase ${isSpecial ? 'text-[#9A844F]' : 'text-[#728156]/70'}`}>
                       {letterTitle}
                     </span>
-                    <Sparkles className="w-4 h-4 text-[#728156]/50" />
+                    <Sparkles className={`w-4 h-4 ${isSpecial ? 'text-[#9A844F]/70 animate-pulse' : 'text-[#728156]/50'}`} />
                   </div>
 
                   {/* Question Text */}
-                  <div className="flex-1 min-h-0 w-full flex flex-col justify-center items-center my-auto overflow-y-auto no-scrollbar">
-                    <p className={`${textStyle} w-full`}>
+                  <div className="flex-1 min-h-0 w-full flex flex-col justify-start items-center overflow-y-auto chat-scrollbar pr-1">
+                    <p className={`${textStyle} w-full my-auto`}>
                       {activeLetter?.text || "Your are one and only for me, isn't it?"}
                     </p>
                   </div>
@@ -683,13 +698,13 @@ export default function NoonaApp() {
               );
             })()}
 
-            {/* Previous & Next Button wrapper */}
+            {/* Previous & Next Button wrapper (Supports safe area home indicator) */}
             {(() => {
               const activeLetter = gameLetters[currentMood]?.[letterIndex];
               const nextBtnLabel = activeLetter?.nextButtonText || "Next";
               const showPrev = currentMood !== 'cute' || letterIndex > 0;
               return (
-                <div className="flex justify-between items-center pt-4 w-full">
+                <div className="flex justify-between items-center pt-4 w-full pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
                   {showPrev ? (
                     <button
                       onClick={handlePrevLetter}
@@ -713,7 +728,7 @@ export default function NoonaApp() {
           </div>
         )}
         {activeScreen === 'chat' && (
-          <div className="flex-1 flex flex-col justify-between pt-1 pb-4 z-10 overflow-hidden animate-fade-in">
+          <div className="flex-1 flex flex-col justify-between pt-1 pb-4 z-10 overflow-hidden animate-fade-in px-5">
             <div className="flex flex-col h-full overflow-hidden">
               {/* Panel Header */}
               <div className="flex items-center justify-between pb-2 border-b border-[#728156]/10 shrink-0">
@@ -755,7 +770,7 @@ export default function NoonaApp() {
                         {/* His message (Lynn is sender -> Right side) */}
                         {item.message && (
                           <div className="flex justify-end">
-                            <div className="bg-[#E7F5DC] text-[#728156] text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[80%] shadow-inner-soft border border-[#cbe3bb]/30">
+                            <div className="bg-[#E7F5DC] text-[#728156] text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[80%] shadow-inner-soft border border-[#cbe3bb]/30 whitespace-pre-line">
                               {item.message}
                             </div>
                           </div>
@@ -764,7 +779,7 @@ export default function NoonaApp() {
                         {/* Her response (Noona is receiver/reply -> Left side) */}
                         {item.response && (
                           <div className="flex justify-start">
-                            <div className="glass-card text-[#728156] text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tl-sm max-w-[80%] border border-[#728156]/10">
+                            <div className="glass-card text-[#728156] text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tl-sm max-w-[80%] border border-[#728156]/10 whitespace-pre-line">
                               {item.response}
                               <span className="block text-[8px] text-[#728156]/60 mt-1 capitalize text-right">
                                 🌸 {item.mood}
@@ -789,8 +804,8 @@ export default function NoonaApp() {
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Chat Input form */}
-              <form onSubmit={handleSendMessage} className="flex gap-2 items-center shrink-0">
+              {/* Chat Input form (Supports bottom safe area home indicator) */}
+              <form onSubmit={handleSendMessage} className="flex gap-2 items-center shrink-0 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2 border-t border-[#728156]/10">
                 <input
                   type="text"
                   value={inputMessage}
@@ -814,7 +829,7 @@ export default function NoonaApp() {
         {/* SCREEN: ROMANTIC QUOTES GALLERY                           */}
         {/* ========================================================= */}
         {activeScreen === 'quotes' && (
-          <div className="flex-1 flex flex-col justify-between pt-1 pb-4 z-10 animate-fade-in">
+          <div className="flex-1 flex flex-col justify-between pt-1 pb-4 z-10 animate-fade-in px-5 overflow-hidden">
             <p className="text-[#728156] text-xs text-center font-medium opacity-80 h-12 flex items-center justify-center">
               Draw inspiration from our mood collection.
             </p>
@@ -855,8 +870,8 @@ export default function NoonaApp() {
               </div>
             </div>
 
-            {/* Next Quote button */}
-            <div className="flex justify-end pt-4">
+            {/* Next Quote button (Supports bottom safe-area indicator offset) */}
+            <div className="flex justify-end pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
               <button
                 onClick={handleNextQuote}
                 className="glass-pill text-[#728156] hover:bg-[#E7F5DC] px-5 py-2.5 rounded-full flex items-center gap-1.5 text-xs font-bold transition border border-[#cbe3bb] hover:shadow-soft"

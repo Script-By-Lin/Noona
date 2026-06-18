@@ -6,9 +6,11 @@ import {
   MessageCircle, 
   Send, 
   Trash2,
-  ChevronLeft
+  ChevronLeft,
+  Sparkles
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
+import { playNotificationSound } from '@/lib/audio';
 
 interface ChatMessage {
   id: string;
@@ -67,6 +69,11 @@ export default function NoonaReplyScreen() {
           
           if (optIndex !== -1) {
             return prev.map((m, idx) => idx === optIndex ? newRecord : m);
+          }
+          
+          // Play chime if message contains Lynn's incoming message or gameplay choice
+          if (newRecord.message) {
+            playNotificationSound();
           }
           
           return [...prev, newRecord];
@@ -158,17 +165,17 @@ export default function NoonaReplyScreen() {
   };
 
   return (
-    <div className="relative w-full h-[100dvh] bg-[#F0F4EF] flex flex-col justify-between transition-all duration-500 overflow-hidden safe-area-padding">
+    <div className="w-full h-[100dvh] bg-[#F0F4EF] flex justify-center items-center overflow-hidden relative">
       {/* Background Animated Blobs inside viewport container */}
       <div className="bg-blob w-52 h-52 bg-[#E7F5DC] top-12 left-[-20px] opacity-70" />
       <div className="bg-blob w-72 h-72 bg-[#F4FAF0] bottom-10 right-[-30px] opacity-70" style={{ animationDelay: '-5s' }} />
       <div className="bg-blob w-44 h-44 bg-[#eef8e8] top-[45%] right-[-10px] opacity-60" style={{ animationDelay: '-10s' }} />
 
-      {/* Screen Content Wrapper */}
-      <div className="flex-1 flex flex-col w-full max-w-lg mx-auto overflow-hidden relative z-10">
+      {/* Screen Content Wrapper (Centered smartphone frame on desktop, full screen on mobile) */}
+      <div className="w-full md:max-w-[428px] h-full md:h-[92dvh] md:rounded-[48px] md:border-4 md:border-white/80 md:shadow-2xl bg-[#F0F4EF] flex flex-col overflow-hidden relative z-10">
         
-        {/* Top Header Panel */}
-        <div className="bg-[#E7F5DC]/45 pb-5 pt-4 px-5 rounded-b-[36px] flex items-center justify-between z-40 -mx-5 mb-4 border-b border-[#cbe3bb]/15">
+        {/* Top Header Panel (Supports safe-area notch padding) */}
+        <div className="bg-[#E7F5DC]/55 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] px-5 rounded-b-[36px] flex items-center justify-between z-40 border-b border-[#cbe3bb]/20 shrink-0">
           <div className="flex items-center gap-1.5">
             <a 
               href="/"
@@ -196,26 +203,26 @@ export default function NoonaReplyScreen() {
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             )}
-            <span className="text-[9px] bg-[#728156] text-white px-2 py-1 rounded-full font-bold uppercase tracking-wider">
-              Lynn's Screen
+            <span className="text-[9px] bg-[#728156] text-white px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
+              Noona Panel
             </span>
           </div>
         </div>
 
         {/* Chat Feed Panel */}
-        <div className="flex-1 flex flex-col justify-between overflow-hidden">
+        <div className="flex-1 flex flex-col justify-between overflow-hidden px-5">
           
           {/* Chat list */}
-          <div className="flex-1 overflow-y-auto chat-scrollbar my-3 pr-1 space-y-3 min-h-0">
+          <div className="flex-1 overflow-y-auto chat-scrollbar my-2 pr-1 space-y-3 min-h-0">
             {chatLoading ? (
               <div className="flex justify-center items-center h-full text-xs text-[#728156]/70">
                 Loading conversations...
               </div>
             ) : messages.length === 0 ? (
               <div className="h-full flex flex-col justify-center items-center text-center p-4">
-                <MessageCircle className="w-8 h-8 text-[#728156]/30 mb-2" />
+                <MessageCircle className="w-8 h-8 text-[#728156]/30 mb-2 animate-bounce" />
                 <p className="text-xs font-semibold text-[#728156]/70">
-                  No messages from Noona yet. When Noona sends a message, it will show up here in real-time.
+                  No messages from Lynn yet. When Lynn plays the game or writes a message, it will show up here.
                 </p>
               </div>
             ) : (
@@ -223,48 +230,57 @@ export default function NoonaReplyScreen() {
                 const isGameLetter = item.message && item.message.startsWith('[');
                 
                 if (isGameLetter) {
-                  return (
-                    <div key={item.id} className="flex flex-col gap-2">
-                      {/* His question (Lynn is sender -> Right side of screen) */}
-                      {item.message && (
-                        <div className="flex justify-end">
-                          <div className="bg-[#728156] text-white text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[80%] shadow-inner-soft border border-[#728156]/10">
-                            {item.message}
-                          </div>
-                        </div>
-                      )}
+                  const match = item.message.match(/^\[(.*?)\]\s*([\s\S]*)$/);
+                  const titleAndMood = match ? match[1] : "Game Letter";
+                  const letterContent = match ? match[2] : item.message;
 
-                      {/* Her response/answer (Noona is sender -> Left side of screen) */}
-                      {item.response && (
-                        <div className="flex justify-start">
-                          <div className="glass-card text-[#728156] text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tl-sm max-w-[80%] border border-[#728156]/10">
-                            {item.response}
-                            {item.mood && (
-                              <span className="block text-[8px] text-[#728156]/60 mt-1 capitalize text-right">
-                                🌸 {item.mood}
-                              </span>
-                            )}
-                          </div>
+                  return (
+                    <div key={item.id} className="flex justify-start w-full my-2">
+                      <div className="w-[85%] rounded-[24px] bg-gradient-to-br from-[#E7F5DC]/45 to-[#F4FAF0]/90 border border-[#cbe3bb]/40 p-4 shadow-sm relative overflow-hidden">
+                        {/* Decorative background outline */}
+                        <div className="absolute top-1 right-1 opacity-[0.05] pointer-events-none">
+                          <Heart className="w-16 h-16 fill-[#728156] text-[#728156]" />
                         </div>
-                      )}
+                        
+                        {/* Header badge */}
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Sparkles className="w-3.5 h-3.5 text-[#728156]/70" />
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#728156]/90 bg-[#E7F5DC] px-2 py-0.5 rounded-full border border-[#cbe3bb]/30">
+                            🎮 {titleAndMood}
+                          </span>
+                        </div>
+
+                        {/* Letter text with full newlines support */}
+                        <p className="text-[#728156]/90 text-[11px] font-medium leading-relaxed whitespace-pre-line border-b border-[#728156]/10 pb-2 mb-2">
+                          {letterContent}
+                        </p>
+
+                        {/* Choice badge */}
+                        <div className="flex items-center justify-between text-[10px] font-bold">
+                          <span className="text-[#728156]/60">Lynn's Choice:</span>
+                          <span className="bg-[#728156] text-white text-[10px] px-3 py-1 rounded-full shadow-inner-soft">
+                            ❤️ {item.response}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   );
                 } else {
                   return (
                     <div key={item.id} className="flex flex-col gap-2">
-                      {/* Her message (Noona is sender -> Left side of screen) */}
+                      {/* His message (Lynn is sender -> Left side of screen) */}
                       {item.message && (
                         <div className="flex justify-start">
-                          <div className="glass-card text-[#728156] text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tl-sm max-w-[80%] border border-[#728156]/10">
+                          <div className="glass-card text-[#728156] text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tl-sm max-w-[80%] border border-[#728156]/10 whitespace-pre-line">
                             {item.message}
                           </div>
                         </div>
                       )}
 
-                      {/* His response/reply (Lynn is sender -> Right side of screen) */}
+                      {/* Her response/reply (Noona is sender -> Right side of screen) */}
                       {item.response && (
                         <div className="flex justify-end">
-                          <div className="bg-[#728156] text-white text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[80%] shadow-inner-soft border border-[#728156]/10">
+                          <div className="bg-[#728156] text-white text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[80%] shadow-inner-soft border border-[#728156]/10 whitespace-pre-line">
                             {item.response}
                             {item.mood && (
                               <span className="block text-[8px] text-white/70 mt-1 capitalize text-right">
@@ -282,16 +298,16 @@ export default function NoonaReplyScreen() {
             <div ref={chatEndRef} />
           </div>
 
-          {/* Chat Input form */}
-          <form onSubmit={handleSendMessage} className="flex gap-2 items-center shrink-0 pt-2 border-t border-[#728156]/5">
+          {/* Chat Input form (Supports bottom safe-area bezel offset) */}
+          <form onSubmit={handleSendMessage} className="flex gap-2 items-center shrink-0 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-[#728156]/10">
             <input
               type="text"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder={
                 messages.length > 0 && !messages[messages.length - 1].response
-                  ? "Type reply to Noona's last message..."
-                  : "Type new message to Noona..."
+                  ? "Type reply to Lynn's last message..."
+                  : "Type new message to Lynn..."
               }
               className="flex-1 bg-white border border-[#cbe3bb] text-xs font-medium rounded-full px-4 py-3 outline-none text-[#728156] placeholder-[#728156]/40 focus:border-[#728156] transition"
             />
