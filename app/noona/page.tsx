@@ -158,14 +158,14 @@ export default function NoonaReplyScreen() {
   };
 
   return (
-    <div className="relative w-full max-w-[430px] h-screen md:h-[932px] bg-white shadow-soft border-l border-r border-[#728156]/5 flex flex-col justify-between px-5 pb-6 pt-2 transition-all duration-500 md:rounded-[40px] overflow-hidden">
+    <div className="relative w-full h-[100dvh] bg-[#F0F4EF] flex flex-col justify-between transition-all duration-500 overflow-hidden safe-area-padding">
       {/* Background Animated Blobs inside viewport container */}
       <div className="bg-blob w-52 h-52 bg-[#E7F5DC] top-12 left-[-20px] opacity-70" />
       <div className="bg-blob w-72 h-72 bg-[#F4FAF0] bottom-10 right-[-30px] opacity-70" style={{ animationDelay: '-5s' }} />
       <div className="bg-blob w-44 h-44 bg-[#eef8e8] top-[45%] right-[-10px] opacity-60" style={{ animationDelay: '-10s' }} />
 
       {/* Screen Content Wrapper */}
-      <div className="flex-1 flex flex-col overflow-hidden relative z-10">
+      <div className="flex-1 flex flex-col w-full max-w-lg mx-auto overflow-hidden relative z-10">
         
         {/* Top Header Panel */}
         <div className="bg-[#E7F5DC]/45 pb-5 pt-4 px-5 rounded-b-[36px] flex items-center justify-between z-40 -mx-5 mb-4 border-b border-[#cbe3bb]/15">
@@ -219,32 +219,65 @@ export default function NoonaReplyScreen() {
                 </p>
               </div>
             ) : (
-              messages.map((item) => (
-                <div key={item.id} className="flex flex-col gap-2">
-                  {/* His message (Lynn is sender -> Left side of Noona's screen) */}
-                  {item.message && (
-                    <div className="flex justify-start">
-                      <div className="glass-card text-[#728156] text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tl-sm max-w-[80%] border border-[#728156]/10">
-                        {item.message}
-                      </div>
-                    </div>
-                  )}
+              messages.map((item) => {
+                const isGameLetter = item.message && item.message.startsWith('[');
+                
+                if (isGameLetter) {
+                  return (
+                    <div key={item.id} className="flex flex-col gap-2">
+                      {/* His question (Lynn is sender -> Right side of screen) */}
+                      {item.message && (
+                        <div className="flex justify-end">
+                          <div className="bg-[#728156] text-white text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[80%] shadow-inner-soft border border-[#728156]/10">
+                            {item.message}
+                          </div>
+                        </div>
+                      )}
 
-                  {/* Her response (Noona is sender -> Right side of Noona's screen) */}
-                  {item.response && (
-                    <div className="flex justify-end">
-                      <div className="bg-[#728156] text-white text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[80%] shadow-inner-soft border border-[#728156]/10">
-                        {item.response}
-                        {item.mood && (
-                          <span className="block text-[8px] text-white/70 mt-1 capitalize text-right">
-                            🌸 {item.mood}
-                          </span>
-                        )}
-                      </div>
+                      {/* Her response/answer (Noona is sender -> Left side of screen) */}
+                      {item.response && (
+                        <div className="flex justify-start">
+                          <div className="glass-card text-[#728156] text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tl-sm max-w-[80%] border border-[#728156]/10">
+                            {item.response}
+                            {item.mood && (
+                              <span className="block text-[8px] text-[#728156]/60 mt-1 capitalize text-right">
+                                🌸 {item.mood}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))
+                  );
+                } else {
+                  return (
+                    <div key={item.id} className="flex flex-col gap-2">
+                      {/* Her message (Noona is sender -> Left side of screen) */}
+                      {item.message && (
+                        <div className="flex justify-start">
+                          <div className="glass-card text-[#728156] text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tl-sm max-w-[80%] border border-[#728156]/10">
+                            {item.message}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* His response/reply (Lynn is sender -> Right side of screen) */}
+                      {item.response && (
+                        <div className="flex justify-end">
+                          <div className="bg-[#728156] text-white text-xs font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-[80%] shadow-inner-soft border border-[#728156]/10">
+                            {item.response}
+                            {item.mood && (
+                              <span className="block text-[8px] text-white/70 mt-1 capitalize text-right">
+                                🌸 {item.mood}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+              })
             )}
             <div ref={chatEndRef} />
           </div>

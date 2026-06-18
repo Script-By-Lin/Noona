@@ -19,6 +19,16 @@ self.addEventListener('install', event => {
 
 // Cache and return requests
 self.addEventListener('fetch', event => {
+  // Only handle HTTP/HTTPS requests (ignores WebSockets and Chrome extensions)
+  if (!event.request.url.startsWith('http') && !event.request.url.startsWith('https')) {
+    return;
+  }
+  
+  // Ignore Next.js development hot module replacement (HMR) requests
+  if (event.request.url.includes('/_next/') || event.request.url.includes('webpack-hmr')) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then(response => {
@@ -27,8 +37,11 @@ self.addEventListener('fetch', event => {
           return response;
         }
         return fetch(event.request);
-      }
-    )
+      })
+      .catch(err => {
+        // Fallback to fetch on match failure
+        return fetch(event.request);
+      })
   );
 });
 
