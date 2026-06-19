@@ -218,8 +218,8 @@ export default function NoonaReplyScreen() {
       <div className="bg-blob w-72 h-72 bg-[#F4FAF0] bottom-10 right-[-30px] opacity-70" style={{ animationDelay: '-5s' }} />
       <div className="bg-blob w-44 h-44 bg-[#eef8e8] top-[45%] right-[-10px] opacity-60" style={{ animationDelay: '-10s' }} />
 
-      {/* Screen Content Wrapper (Centered smartphone frame on desktop, full screen on mobile) */}
-      <div className="w-full md:max-w-[428px] h-full md:h-[92dvh] md:rounded-[48px] md:border-4 md:border-white/80 md:shadow-2xl bg-[#F0F4EF] flex flex-col overflow-hidden relative z-10">
+      {/* Screen Wrapper (Full Screen App Layout) */}
+      <div className="w-full h-full bg-[#F0F4EF] flex flex-col overflow-hidden relative z-10">
         
         {/* Top Header Panel (Supports safe-area notch padding) */}
         <div className="bg-[#E7F5DC]/55 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] px-5 rounded-b-[36px] flex items-center justify-between z-40 border-b border-[#cbe3bb]/20 shrink-0">

@@ -72,6 +72,8 @@ interface GameLetter {
   nextButtonText?: string;
   trueFeedback?: string;
   falseFeedback?: string;
+  options?: string[];
+  optionFeedbacks?: string[];
 }
 
 const gameLetters: Record<MoodType, GameLetter[]> = {
@@ -85,13 +87,25 @@ const gameLetters: Record<MoodType, GameLetter[]> = {
     },
     { 
       id: 2, 
+      text: "How much do you miss me when I'm not around? 🥺", 
+      subText: "Honestly, just seeing your name makes my day ten times brighter.",
+      options: ["A little bit", "More than you think", "Every single second", "I'm missing you right now!"],
+      optionFeedbacks: [
+        "Only a little? I'm going to have to make you miss me more! 🥺",
+        "Aww, my heart is dancing hearing that! 🤍",
+        "That's exactly how much I miss you too! 🥰",
+        "Let me send you a warm hug to make it better! 🫂"
+      ]
+    },
+    { 
+      id: 3, 
       text: "Do you get a little happy when you see my name? 😊", 
       subText: "Honestly, just seeing your name makes my day ten times brighter.",
       trueFeedback: "Honestly, your name makes my whole day ten times brighter! ✨",
       falseFeedback: "Liars go to the cute jail! I know you smile. 😉"
     },
     { 
-      id: 3, 
+      id: 4, 
       text: "Can I keep you forever? Just checking...", 
       subText: "I don't need much, just you by my side through everything.",
       trueFeedback: "Forever is a promise, and I'm locked in! 🔒❤️",
@@ -108,13 +122,25 @@ const gameLetters: Record<MoodType, GameLetter[]> = {
     },
     { 
       id: 2, 
+      text: "What is your favorite thing about me? 😉", 
+      subText: "Be honest... I'm curious what caught your attention.",
+      options: ["Your sweet smile", "Your beautiful eyes", "Your cute voice", "Your warm personality"],
+      optionFeedbacks: [
+        "Hehe, you make me smile even wider now! 😊",
+        "I only look at you with them... 👁️✨",
+        "Next time we call, I'll talk even softer for you. 🎙️💕",
+        "And I promise to keep you warm forever. 🤍"
+      ]
+    },
+    { 
+      id: 3, 
       text: "Do you want to go on a secret date with me?", 
       subText: "Just you, me, and a memory we'll never forget.",
       trueFeedback: "Pick a time, I'll bring the sparks! 🌟",
       falseFeedback: "A public date it is, then! Let the world see us. 🌹"
     },
     { 
-      id: 3, 
+      id: 4, 
       text: "Is it hot in here, or is it just our chemistry?", 
       subText: "Every time we chat, my heart beats a little faster.",
       trueFeedback: "Definitely the chemistry, and it's off the charts! 🔥",
@@ -124,7 +150,7 @@ const gameLetters: Record<MoodType, GameLetter[]> = {
   deep: [
     { 
       id: 1, 
-      text: "Your are one and only for me, isn't it?", 
+      text: "You belong to my heart?, isn't it?", 
       subText: "Maybe it's nothing... or maybe it's the beginning of something.",
       trueFeedback: "Knowing I'm your only one makes me feel so safe. ❤️",
       falseFeedback: "Even if it takes time, I'll prove I'm the one for you."
@@ -152,39 +178,45 @@ const gameLetters: Record<MoodType, GameLetter[]> = {
     },
     { 
       id: 5, 
+      text: "What does love mean to you? 🤍", 
+      subText: "I want to understand how your heart views connection.",
+      options: ["A quiet, safe space", "An exciting adventure", "A deep, unbreakable bond", "Growing together every day"],
+      optionFeedbacks: [
+        "I hope I can be that sanctuary for you. 🏡",
+        "Then let's explore this beautiful world hand in hand. 🗺️",
+        "No matter the distance, we are tied by the heart. 🔗❤️",
+        "I'll support you in becoming the best version of yourself. 🌱"
+      ]
+    },
+    { 
+      id: 6, 
       text: "If you are the sky, I want to be the stars that keep you company.", 
       subText: "Every dark night feels warmer when we are together.",
       trueFeedback: "Then let's shine together in the dark. 🌌",
       falseFeedback: "Even in the clouds, I'll be looking up for you."
     },
     { 
-      id: 6, 
+      id: 7, 
       text: "I want to know all your stories, even the ones you think are boring.", 
       subText: "To me, every word you speak is like a beautiful melody.",
       trueFeedback: "I could listen to you speak for a lifetime.",
       falseFeedback: "Then I'll just write new ones together with you."
     },
     { 
-      id: 7, 
-      text: "Do you feel a spark whenever our hands touch?", 
+      id: 8, 
+      text: "Do you get unpatient if I'm talking to much?", 
       subText: "It's like a quiet current of warmth running through my veins.",
       trueFeedback: "A warm current of connection running straight to my heart.",
       falseFeedback: "Maybe it's a slow burn instead of a spark."
     },
     { 
-      id: 8, 
+      id: 9, 
       text: "Sometimes I wonder if you are thinking about me at the exact same moment.", 
       subText: "It would be so sweet if our thoughts crossed paths in the dark.",
       trueFeedback: "I hope our thoughts cross paths in the quiet nights. 🌙",
       falseFeedback: "I'll just think of you twice as much to make up for it."
     },
-    { 
-      id: 9, 
-      text: "I want to be the person who makes your bad days a little brighter.", 
-      subText: "Let me carry a piece of your heavy thoughts.",
-      trueFeedback: "You already make my worst days feel light. 🤍",
-      falseFeedback: "I'll keep trying, because you deserve that comfort."
-    },
+
     { 
       id: 10, 
       text: "Do you love me , Noona? Even though you do not love me , I’m falling in love with you :<", 
@@ -193,7 +225,7 @@ const gameLetters: Record<MoodType, GameLetter[]> = {
       leftButton: "YES",
       rightButton: "Love You",
       nextButtonText: "Another Special",
-      trueFeedback: "My heart skipped a beat... I love you too Lynn! 🥰",
+      trueFeedback: "My heart skipped a beat... I love you too Noona! 🥰",
       falseFeedback: "You have no idea how long I've waited to hear that! 💕"
     },
     { 
@@ -218,6 +250,18 @@ const gameLetters: Record<MoodType, GameLetter[]> = {
     },
     { 
       id: 2, 
+      text: "How do you show your commitment when things get tough?", 
+      subText: "Loyalty is shown in actions, not just words.",
+      options: ["By listening and understanding", "By staying close and supportive", "By reminding you how much I care", "By facing the challenge together"],
+      optionFeedbacks: [
+        "Communication is the bridge of our hearts. 🤝",
+        "I'll always be here waiting for you. 🤍",
+        "Those words keep me going, thank you. 🥰",
+        "Together, there is nothing we cannot overcome. 🛡️"
+      ]
+    },
+    { 
+      id: 3, 
       text: "Am I the only one who holds your key?", 
       subText: "I don't wander, my heart is completely settled where you are.",
       trueFeedback: "The lock is sealed, and the key is safe in your hands. 🔑",
@@ -234,6 +278,18 @@ const gameLetters: Record<MoodType, GameLetter[]> = {
     },
     { 
       id: 2, 
+      text: "When you have a rough day, what helps you feel better? 🧸", 
+      subText: "I want to know how to comfort you when you need it most.",
+      options: ["A long quiet walk", "Talking it out with me", "Listening to cozy music", "Just resting in my presence"],
+      optionFeedbacks: [
+        "I'd walk in silence right beside you. 🌲",
+        "My ears and heart are completely open to you. 🎙️🤍",
+        "Let me make a playlist just for your soul. 🎵",
+        "Lean on me. I'll watch over you. 🧸"
+      ]
+    },
+    { 
+      id: 3, 
       text: "Can I be your safe place to run to?", 
       subText: "No judgment, no expectations, just safety and warmth.",
       trueFeedback: "No judgment, no expectations, just safety and warmth. 🏡",
@@ -257,7 +313,7 @@ export default function NoonaApp() {
   
   // Game State
   const [letterIndex, setLetterIndex] = useState(0);
-  const [gameAnswer, setGameAnswer] = useState<'true' | 'false' | null>(null);
+  const [gameAnswer, setGameAnswer] = useState<string | null>(null);
   const [gameFeedback, setGameFeedback] = useState<string | null>(null);
 
   // Chat State
@@ -409,33 +465,47 @@ export default function NoonaApp() {
   }, [messages, isTyping]);
 
   // Handle Crush Game Answer
-  const handleGameAnswer = (answer: 'true' | 'false') => {
+  const handleGameAnswer = (answer: string) => {
     setGameAnswer(answer);
     
     const activeLetter = gameLetters[currentMood]?.[letterIndex];
     
-    if (answer === 'true' && activeLetter?.trueFeedback) {
-      setGameFeedback(activeLetter.trueFeedback);
-    } else if (answer === 'false' && activeLetter?.falseFeedback) {
-      setGameFeedback(activeLetter.falseFeedback);
-    } else {
-      if (answer === 'true') {
-        setGameFeedback("Yay! 🥰");
+    let feedback = "";
+    if (activeLetter?.options) {
+      const idx = activeLetter.options.indexOf(answer);
+      if (activeLetter.optionFeedbacks && activeLetter.optionFeedbacks[idx]) {
+        feedback = activeLetter.optionFeedbacks[idx];
       } else {
-        setGameFeedback("That's okay. ✨");
+        feedback = `You chose: ${answer} 🥰`;
+      }
+    } else {
+      if (answer === 'true' && activeLetter?.trueFeedback) {
+        feedback = activeLetter.trueFeedback;
+      } else if (answer === 'false' && activeLetter?.falseFeedback) {
+        feedback = activeLetter.falseFeedback;
+      } else {
+        feedback = answer === 'true' ? "Yay! 🥰" : "That's okay. ✨";
       }
     }
+    
+    setGameFeedback(feedback);
 
     // Save game response to database so Lynn can view it in the chat
     const saveGameResponse = async () => {
       try {
         const letterTitle = activeLetter?.title || `Letter ${letterIndex + 1}`;
+        let responseStr = answer;
+        if (!activeLetter?.options) {
+          responseStr = answer === 'true' 
+            ? (activeLetter?.leftButton || 'True') 
+            : (activeLetter?.rightButton || 'False');
+        }
         await supabase
           .from('chats')
           .insert({
             user_id: userId,
             message: `[${letterTitle} - ${currentMood.toUpperCase()}] ${activeLetter?.text}`,
-            response: answer === 'true' ? (activeLetter?.leftButton || 'True') : (activeLetter?.rightButton || 'False'),
+            response: responseStr,
             mood: currentMood
           });
       } catch (err) {
@@ -444,11 +514,11 @@ export default function NoonaApp() {
     };
     saveGameResponse();
 
-    // Auto-advance to the next page/letter after 1.2 seconds if it's a standard letter (no custom buttons like YES/Love You/Access)
+    // Auto-advance to the next page/letter after 2 seconds if it's a standard letter (no custom buttons like YES/Love You/Access)
     if (!activeLetter?.leftButton) {
       setTimeout(() => {
         handleNextLetter();
-      }, 1200);
+      }, 2000);
     }
   };
 
@@ -489,13 +559,13 @@ export default function NoonaApp() {
     if (letterIndex > 0) {
       setLetterIndex(prev => prev - 1);
     } else {
-      // Transition backward between categories
+      // Transition backward between categories dynamically
       if (currentMood === 'deep') {
         setCurrentMood('flirty');
-        setLetterIndex(2); // Flirty has 3 letters (index 2)
+        setLetterIndex((gameLetters.flirty?.length || 1) - 1);
       } else if (currentMood === 'flirty') {
         setCurrentMood('cute');
-        setLetterIndex(2); // Cute has 3 letters (index 2)
+        setLetterIndex((gameLetters.cute?.length || 1) - 1);
       }
     }
   };
@@ -631,8 +701,8 @@ export default function NoonaApp() {
       <div className="bg-blob w-72 h-72 bg-[#F4FAF0] bottom-10 right-[-30px] opacity-70" style={{ animationDelay: '-5s' }} />
       <div className="bg-blob w-44 h-44 bg-[#eef8e8] top-[45%] right-[-10px] opacity-60" style={{ animationDelay: '-10s' }} />
 
-      {/* Screen Content Wrapper (Centered smartphone frame on desktop, full screen on mobile) */}
-      <div className="w-full md:max-w-[428px] h-full md:h-[92dvh] md:rounded-[48px] md:border-4 md:border-white/80 md:shadow-2xl bg-[#F0F4EF] flex flex-col overflow-hidden relative z-10">
+      {/* Screen Wrapper (Full Screen App Layout) */}
+      <div className="w-full h-full bg-[#F0F4EF] flex flex-col overflow-hidden relative z-10">
         
         {/* Main App Header with Curved Pastel Top Panel (Matching images, supports safe area notch) */}
         <div className="bg-[#E7F5DC]/55 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] px-5 rounded-b-[36px] flex items-center justify-between z-40 border-b border-[#cbe3bb]/20 shrink-0">
@@ -718,9 +788,9 @@ export default function NoonaApp() {
                 : "glass-card border-white/60";
               
               return (
-                <div className={`w-full flex-1 min-h-0 max-h-[390px] rounded-[36px] ${isSpecial ? 'p-4 sm:p-5' : 'p-6'} flex flex-col justify-between items-center relative shadow-soft transition-all duration-500 hover:shadow-md border-2 ${cardBgClass}`}>
+                <div className={`w-full flex-1 min-h-0 ${isSpecial ? 'max-h-[550px]' : 'max-h-[390px]'} rounded-[36px] ${isSpecial ? 'p-6 sm:p-5' : 'p-6'} flex flex-col justify-between items-center relative shadow-soft transition-all duration-500 hover:shadow-md border-2 ${cardBgClass}`}>
                   <div className="w-full flex justify-between items-center shrink-0">
-                    <span className={`text-sm font-semibold tracking-wide uppercase ${isSpecial ? 'text-[#728156]' : 'text-[#728156]/70'}`}>
+                    <span className={`text-md font-semibold tracking-wide uppercase ${isSpecial ? 'text-[#728156]' : 'text-[#728156]/70'}`}>
                       {letterTitle}
                     </span>
                     <Sparkles className={`w-4 h-4 ${isSpecial ? 'text-[#728156] animate-pulse' : 'text-[#728156]/50'}`} />
@@ -734,13 +804,13 @@ export default function NoonaApp() {
                   </div>
 
                   {/* Heart outline: rendered inline only for standard letters, under the letter text */}
-                  {!isSpecial ? (
+                  {!isSpecial && !activeLetter?.options ? (
                     <div className="heart-outline-container flex-1 flex items-center justify-center my-1 pointer-events-none opacity-30 z-0 w-full">
                       <Heart className="w-28 h-28 text-[#728156] fill-transparent stroke-[1.5] animate-heart-pulse" />
                     </div>
                   ) : (
-                    // Spacer for Special Letter layout to push buttons down cleanly
-                    <div className="h-2 sm:h-3" />
+                    // Spacer for Special Letter or Multiple Choice layout to push buttons down cleanly
+                    <div className="h-2 sm:h-3 flex-1" />
                   )}
 
                   {/* Action Buttons OR Feedback Toast (replaces buttons when answer is selected) */}
@@ -748,6 +818,21 @@ export default function NoonaApp() {
                     {gameFeedback ? (
                       <div className="w-full text-center py-3 px-4 glass-pill rounded-2xl text-[11px] font-bold text-[#728156] border border-[#728156]/15 animate-slide-down shadow-soft">
                         {gameFeedback}
+                      </div>
+                    ) : activeLetter?.options ? (
+                      <div className="flex flex-col gap-2 w-full max-h-[220px] overflow-y-auto pr-1 no-scrollbar justify-center">
+                        {activeLetter.options.map((option, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleGameAnswer(option)}
+                            className="w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all duration-300 bg-[#E7F5DC] hover:bg-[#d8ebcb] text-[#728156] border border-[#cbe3bb]/50 active:scale-95 text-left flex items-center gap-2 shadow-soft"
+                          >
+                            <span className="w-5 h-5 rounded-full bg-[#728156]/10 text-[#728156] flex items-center justify-center text-[10px] font-extrabold shrink-0">
+                              {String.fromCharCode(65 + idx)}
+                            </span>
+                            <span className="flex-1 text-left whitespace-normal break-words">{option}</span>
+                          </button>
+                        ))}
                       </div>
                     ) : (
                       <div className="flex gap-4 w-full">
