@@ -321,6 +321,7 @@ export default function NoonaApp() {
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
+  const [aiMode, setAiMode] = useState(true); // AI Autoreply vs Direct Chat
   const chatEndRef = useRef<HTMLDivElement>(null);
   const userId = 'user-13-pro-max';
 
@@ -429,6 +430,10 @@ export default function NoonaApp() {
           
           return [...prev, newRecord];
         });
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chats' }, (payload: any) => {
+        const updatedRecord = payload.new as ChatMessage;
+        setMessages(prev => prev.map(m => m.id === updatedRecord.id ? updatedRecord : m));
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chats' }, (payload: any) => {
         const oldRecord = payload.old as { id: string };
@@ -620,7 +625,11 @@ export default function NoonaApp() {
 
     const userText = inputMessage;
     setInputMessage('');
-    setIsTyping(true);
+    
+    // Only show bot typing indicator if AI Mode is enabled
+    if (aiMode) {
+      setIsTyping(true);
+    }
 
     // Optimistic UI updates
     const tempId = Math.random().toString(36).substring(2, 9);
@@ -646,7 +655,8 @@ export default function NoonaApp() {
         body: JSON.stringify({
           userId: userId,
           message: userText,
-          mood: currentMood
+          mood: currentMood,
+          aiMode: aiMode // Pass AI Mode toggle state
         })
       });
 
@@ -668,25 +678,40 @@ export default function NoonaApp() {
         }
       }
       
-      // Delay response slightly to simulate real typing
-      setTimeout(() => {
-        setIsTyping(false);
-        playNotificationSound();
+      if (aiMode) {
+        // Delay response slightly to simulate real typing for AI
+        setTimeout(() => {
+          setIsTyping(false);
+          playNotificationSound();
+          setMessages(prev => {
+            return prev.map(m => {
+              if (m.id === tempId) {
+                return {
+                  ...m,
+                  id: savedRecord?.id || data.id || tempId,
+                  response: data.response,
+                  created_at: savedRecord?.created_at || m.created_at
+                };
+              }
+              return m;
+            });
+          });
+        }, 1500);
+      } else {
+        // Direct chat mode: just set the true saved ID/timestamp immediately (no bot response)
         setMessages(prev => {
-          // Replace temp msg with actual saved message, or update it
           return prev.map(m => {
             if (m.id === tempId) {
               return {
                 ...m,
                 id: savedRecord?.id || data.id || tempId,
-                response: data.response,
                 created_at: savedRecord?.created_at || m.created_at
               };
             }
             return m;
           });
         });
-      }, 1500);
+      }
 
     } catch (e) {
       console.error(e);
@@ -901,9 +926,31 @@ export default function NoonaApp() {
                   </div>
                 </div>
                 
-                <span className="text-[9px] bg-[#728156]/10 text-[#728156] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
-                  Noona's Screen
-                </span>
+                {/* AI Autoreply vs Direct Chat Toggle */}
+                <div className="flex items-center gap-1 bg-[#E7F5DC] px-1.5 py-1 rounded-full border border-[#cbe3bb]/40">
+                  <button
+                    type="button"
+                    onClick={() => setAiMode(true)}
+                    className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold transition-all duration-300 ${
+                      aiMode 
+                        ? 'bg-[#728156] text-white shadow-sm' 
+                        : 'text-[#728156]/60 hover:text-[#728156]'
+                    }`}
+                  >
+                    AI Bot
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAiMode(false)}
+                    className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold transition-all duration-300 ${
+                      !aiMode 
+                        ? 'bg-[#728156] text-white shadow-sm' 
+                        : 'text-[#728156]/60 hover:text-[#728156]'
+                    }`}
+                  >
+                    Direct Chat
+                  </button>
+                </div>
               </div>
 
               {/* Chat list */}

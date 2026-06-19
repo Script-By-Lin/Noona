@@ -6,7 +6,7 @@ import { MoodType } from '@/lib/responseBank';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { userId, message, mood } = body;
+    const { userId, message, mood, aiMode } = body;
 
     // Validate inputs
     if (!message || typeof message !== 'string') {
@@ -20,8 +20,9 @@ export async function POST(request: Request) {
     const selectedMood = validMoods.includes(mood) ? (mood as MoodType) : 'cute';
     const userIdentifier = userId || 'anonymous-user';
 
-    // 1. Generate response based on mood
-    const responseText = await generateResponse(message, selectedMood);
+    // 1. Generate response based on mood (only if aiMode is not false)
+    const shouldGenerateAI = aiMode !== false;
+    const responseText = shouldGenerateAI ? await generateResponse(message, selectedMood) : '';
 
     // 2. Insert conversation into Supabase (will use mock if not configured)
     const { data, error } = await supabase
@@ -31,7 +32,10 @@ export async function POST(request: Request) {
         message: message,
         response: responseText,
         mood: selectedMood
-      });
+      })
+      .select();
+
+    const savedRecord = data && data.length > 0 ? data[0] : null;
 
     if (error) {
       console.error('Failed to save message to database:', error);
@@ -45,10 +49,12 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
+      id: savedRecord?.id,
       message: message,
       response: responseText,
       mood: selectedMood,
-      saved: true
+      saved: true,
+      created_at: savedRecord?.created_at
     });
   } catch (e: any) {
     console.error('API Error:', e);

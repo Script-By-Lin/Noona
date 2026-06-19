@@ -79,6 +79,10 @@ export default function NoonaReplyScreen() {
           return [...prev, newRecord];
         });
       })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chats' }, (payload: any) => {
+        const updatedRecord = payload.new as ChatMessage;
+        setMessages(prev => prev.map(m => m.id === updatedRecord.id ? updatedRecord : m));
+      })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chats' }, (payload: any) => {
         const oldRecord = payload.old as { id: string };
         setMessages(prev => prev.filter(m => m.id !== oldRecord.id));
@@ -136,12 +140,10 @@ export default function NoonaReplyScreen() {
       try {
         await supabase
           .from('chats')
-          .insert({
-            user_id: userId,
-            message: targetMsg.message,
-            response: replyText,
-            mood: targetMsg.mood || 'deep'
-          });
+          .update({
+            response: replyText
+          })
+          .eq('id', targetMsg.id);
       } catch (err) {
         console.error('Failed to save manual reply:', err);
       }

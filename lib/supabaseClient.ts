@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
 
 const isMockEnabled = 
   !supabaseUrl || 
@@ -114,10 +114,53 @@ export const supabase: any = {
           if (typeof window !== 'undefined') {
             const event = new CustomEvent('mock-chat-inserted', { detail: saved });
             window.dispatchEvent(event);
+
+            // Broadcast to other tabs
+            try {
+              const bc = new BroadcastChannel('noona-chats-realtime');
+              bc.postMessage({ type: 'INSERT', records: saved });
+              bc.close();
+            } catch (e) {
+              console.error("Failed to broadcast insert event:", e);
+            }
           }
           return { data: saved, error: null };
         }
         return { data: [], error: null };
+      },
+      update(values: any) {
+        return {
+          async eq(column: string, value: any) {
+            if (table === 'chats' && typeof window !== 'undefined') {
+              const chats = getMockChats();
+              let updatedRecord: any = null;
+              const updated = chats.map((c: any) => {
+                if (c[column] === value) {
+                  updatedRecord = { ...c, ...values };
+                  return updatedRecord;
+                }
+                return c;
+              });
+              localStorage.setItem('noona_chats', JSON.stringify(updated));
+              
+              if (updatedRecord) {
+                // Trigger local update event
+                const event = new CustomEvent('mock-chat-updated', { detail: [updatedRecord] });
+                window.dispatchEvent(event);
+
+                // Broadcast to other tabs
+                try {
+                  const bc = new BroadcastChannel('noona-chats-realtime');
+                  bc.postMessage({ type: 'UPDATE', records: [updatedRecord] });
+                  bc.close();
+                } catch (e) {
+                  console.error("Failed to broadcast update event:", e);
+                }
+              }
+            }
+            return { data: [], error: null };
+          }
+        };
       },
       delete() {
         return {
@@ -130,6 +173,19 @@ export const supabase: any = {
               // Trigger realtime sync event
               const event = new CustomEvent('mock-chat-deleted', { detail: { column, value } });
               window.dispatchEvent(event);
+
+              // Broadcast to other tabs
+              try {
+                const bc = new BroadcastChannel('noona-chats-realtime');
+                if (column === 'id') {
+                  bc.postMessage({ type: 'DELETE', value });
+                } else if (column === 'user_id') {
+                  bc.postMessage({ type: 'DELETE_ALL', value });
+                }
+                bc.close();
+              } catch (e) {
+                console.error("Failed to broadcast delete event:", e);
+              }
             }
             return { data: [], error: null };
           }
@@ -165,6 +221,16 @@ export const supabase: any = {
             }
           };
 
+          const updateHandler = (event: Event) => {
+            const records = (event as CustomEvent).detail;
+            for (const record of records) {
+              const payload = { eventType: 'UPDATE', new: record };
+              listeners
+                .filter(l => l.event === 'UPDATE' || l.event === '*')
+                .forEach(l => l.callback(payload));
+            }
+          };
+
           const deleteHandler = (event: Event) => {
             const { column, value } = (event as CustomEvent).detail;
             if (column === 'id') {
@@ -179,6 +245,42 @@ export const supabase: any = {
                 .forEach(l => l.callback(payload));
             }
           };
+
+          // BroadcastChannel receiver
+          let bc: BroadcastChannel | null = null;
+          try {
+            bc = new BroadcastChannel('noona-chats-realtime');
+            bc.onmessage = (event) => {
+              const { type, records, value } = event.data;
+              if (type === 'INSERT') {
+                for (const record of records) {
+                  const payload = { eventType: 'INSERT', new: record };
+                  listeners
+                    .filter(l => l.event === 'INSERT' || l.event === '*')
+                    .forEach(l => l.callback(payload));
+                }
+              } else if (type === 'UPDATE') {
+                for (const record of records) {
+                  const payload = { eventType: 'UPDATE', new: record };
+                  listeners
+                    .filter(l => l.event === 'UPDATE' || l.event === '*')
+                    .forEach(l => l.callback(payload));
+                }
+              } else if (type === 'DELETE') {
+                const payload = { eventType: 'DELETE', old: { id: value } };
+                listeners
+                  .filter(l => l.event === 'DELETE' || l.event === '*')
+                  .forEach(l => l.callback(payload));
+              } else if (type === 'DELETE_ALL') {
+                const payload = { eventType: 'DELETE_ALL', old: { user_id: value } };
+                listeners
+                  .filter(l => l.event === 'DELETE_ALL' || l.event === '*')
+                  .forEach(l => l.callback(payload));
+              }
+            };
+          } catch (e) {
+            console.error("Failed to setup BroadcastChannel in mock subscriber:", e);
+          }
 
           const storageHandler = (e: StorageEvent) => {
             if (e.key === 'noona_chats') {
@@ -195,6 +297,18 @@ export const supabase: any = {
                     const payload = { eventType: 'INSERT', new: record };
                     listeners
                       .filter(l => l.event === 'INSERT' || l.event === '*')
+                      .forEach(l => l.callback(payload));
+                  }
+
+                  // Find updated records (same ID, different content)
+                  const updatedRecords = newChats.filter((nc: any) => {
+                    const oc = oldChats.find((o: any) => o.id === nc.id);
+                    return oc && (oc.message !== nc.message || oc.response !== nc.response || oc.mood !== nc.mood);
+                  });
+                  for (const record of updatedRecords) {
+                    const payload = { eventType: 'UPDATE', new: record };
+                    listeners
+                      .filter(l => l.event === 'UPDATE' || l.event === '*')
                       .forEach(l => l.callback(payload));
                   }
                   
@@ -222,14 +336,19 @@ export const supabase: any = {
           };
           
           window.addEventListener('mock-chat-inserted', insertHandler);
+          window.addEventListener('mock-chat-updated', updateHandler);
           window.addEventListener('mock-chat-deleted', deleteHandler);
           window.addEventListener('storage', storageHandler);
           
           return {
             unsubscribe() {
               window.removeEventListener('mock-chat-inserted', insertHandler);
+              window.removeEventListener('mock-chat-updated', updateHandler);
               window.removeEventListener('mock-chat-deleted', deleteHandler);
               window.removeEventListener('storage', storageHandler);
+              if (bc) {
+                bc.close();
+              }
             }
           };
         }
