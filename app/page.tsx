@@ -219,10 +219,10 @@ const gameLetters: Record<MoodType, GameLetter[]> = {
 
     { 
       id: 10, 
-      text: "Do you love me , Noona? Even though you do not love me , I’m falling in love with you :<", 
+      text: "Do you love me , Noona? Even though you do not love me , I’m falling in love with you", 
       subText: "Be honest... am I just a friend or something more?",
       title: "Letter 10",
-      leftButton: "YES",
+      leftButton: "ချစ်တယ်",
       rightButton: "Love You",
       nextButtonText: "Another Special",
       trueFeedback: "My heart skipped a beat... I love you too Noona! 🥰",
@@ -230,14 +230,14 @@ const gameLetters: Record<MoodType, GameLetter[]> = {
     },
     { 
       id: 11, 
-      text: "To be honest, you are my energy, my soulmate, my everything and my priority. Meeting you again felt like life giving me a second chance to feel light after so much darkness.\n\nI deeply promise you ... will be there for you no matter what , loyalty , be your trusted person so if I have a chance , I wanna be yours and I could wait for you.\n\nLiebe Dich,\nLynn <3", 
+      text: "To be honest, you are my energy, my soulmate, my everything and my priority. Meeting you again felt like life giving me a second chance to feel light after so much darkness.\n\nI deeply promise you and swear ... will be there for you no matter what , loyalty , be your trusted person so if I have a chance ........\n\nကျွန်တော့်ကိုလက်ခံပေးနိုင်မလား မမ <3,\n\nLynn", 
       subText: "I hope we find something real, even if it starts small.",
       title: "Special Letter",
-      leftButton: "YES",
-      rightButton: "Access",
+      leftButton: "လက်ခံပါတယ်",
+      rightButton: "Accept",
       nextButtonText: "Have a something to say me?",
-      trueFeedback: "Thank you Lynn... I accept your promise and my heart is yours! ❤️",
-      falseFeedback: "Access granted! My thoughts are completely open to you. 💬"
+      trueFeedback: "ကျွန်တော် မမ အတွက် အမြဲတမ်း ယုံကြည်ရတယ့် လူအဖြစ်ရှိနေပေးပါမယ်နော် အရမ်းချစ်တယ်❤️",
+      falseFeedback: "မမ ကိုလဲ အတတ်နိုင်ဆုံးနဲ့အကောင်းဆုံးထားနိုင်အောင်လဲ ကြိုးစားနေပါတယ် ပြီးတော့ အရမ်းချစ်တယ်နော် 💬"
     }
   ],
   loyalty: [
