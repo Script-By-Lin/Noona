@@ -222,7 +222,7 @@ const gameLetters: Record<MoodType, GameLetter[]> = {
       text: "Do you love me , Noona? Even though you do not love me , I’m falling in love with you", 
       subText: "Be honest... am I just a friend or something more?",
       title: "Letter 10",
-      leftButton: "ချစ်တယ်",
+      leftButton: "No",
       rightButton: "Love You",
       nextButtonText: "Another Special",
       trueFeedback: "My heart skipped a beat... I love you too Noona! 🥰",
@@ -315,6 +315,18 @@ export default function NoonaApp() {
   const [letterIndex, setLetterIndex] = useState(0);
   const [gameAnswer, setGameAnswer] = useState<string | null>(null);
   const [gameFeedback, setGameFeedback] = useState<string | null>(null);
+  const [noBtnPos, setNoBtnPos] = useState<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    setNoBtnPos(null);
+  }, [letterIndex, currentMood]);
+
+  const handleNoBtnRunAway = () => {
+    const randomX = Math.floor(Math.random() * 65) + 10;
+    const randomY = Math.floor(Math.random() * 70) + 10;
+    setNoBtnPos({ x: randomX, y: randomY });
+  };
+
 
   // Chat State
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -805,6 +817,8 @@ export default function NoonaApp() {
               const leftBtnLabel = activeLetter?.leftButton || "True";
               const rightBtnLabel = activeLetter?.rightButton || "False";
               const isSpecial = activeLetter?.title === "Special Letter";
+              const isNoonaLetter10 = currentMood === 'deep' && activeLetter?.id === 10;
+
               const textStyle = isSpecial 
                 ? "whitespace-pre-line text-left text-[11px] sm:text-xs md:text-[13px] leading-snug font-semibold px-1 py-0.5 text-[#525d3d]" 
                 : "whitespace-pre-line text-center text-base font-bold px-2 leading-snug text-[#728156]";
@@ -862,7 +876,17 @@ export default function NoonaApp() {
                     ) : (
                       <div className="flex gap-4 w-full">
                         <button
-                          onClick={() => handleGameAnswer('true')}
+                          onClick={isNoonaLetter10 ? handleNoBtnRunAway : () => handleGameAnswer('true')}
+                          onMouseEnter={isNoonaLetter10 ? handleNoBtnRunAway : undefined}
+                          onTouchStart={isNoonaLetter10 ? (e) => { e.preventDefault(); handleNoBtnRunAway(); } : undefined}
+                          style={isNoonaLetter10 && noBtnPos ? { 
+                            position: 'absolute', 
+                            left: `${noBtnPos.x}%`, 
+                            top: `${noBtnPos.y}%`, 
+                            transition: 'all 0.2s ease', 
+                            zIndex: 50,
+                            width: '120px'
+                          } : undefined}
                           className="flex-1 py-3.5 rounded-2xl text-sm font-bold transition-all duration-300 bg-[#E7F5DC] hover:bg-[#d8ebcb] text-[#728156] border border-[#cbe3bb]/50 active:scale-95"
                         >
                           {leftBtnLabel}
