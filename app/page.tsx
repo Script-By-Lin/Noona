@@ -226,7 +226,7 @@ const gameLetters: Record<MoodType, GameLetter[]> = {
       rightButton: "Love You",
       nextButtonText: "Another Special",
       trueFeedback: "My heart skipped a beat... I love you too Noona! 🥰",
-      falseFeedback: "You have no idea how long I've waited to hear that! 💕"
+      falseFeedback: "တစ်သက်လုံးသစ္စာ ရှိရှိနဲ့ အလျော့ပေးပြီးချစ်ပေးပါ့မယ်နော် မမ💕"
     },
     { 
       id: 11, 
